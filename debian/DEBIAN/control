@@ -1,0 +1,9 @@
+Package: pdf-quench
+Version: 1.0.3
+Architecture: all
+Maintainer: Linuxer Wang <linuxerwang@gmail.com>
+Section: office
+Priority: optional
+Depend: python-pygoocanvas, python-poppler, python-pypdf
+Description: A visual tool for cropping pdf files.
+Installed-Size: 44

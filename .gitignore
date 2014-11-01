@@ -2,6 +2,12 @@
 __pycache__/
 *.py[cod]
 
+*.deb
+build
+install
+.waf*
+.lock-*
+
 # C extensions
 *.so
 

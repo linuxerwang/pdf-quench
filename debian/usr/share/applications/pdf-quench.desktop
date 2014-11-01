@@ -1,0 +1,14 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Pdf-Quench
+Comment=Pdf-Quench
+Exec=pdf_quench %f
+Terminal=false
+Type=Application
+MimeType=application/pdf
+Icon=/usr/share/icons/pdf-quench.svg
+StartupNotify=true
+Categories=GNOME;Application;Office;
+X-GNOME-Bugzilla-Bugzilla=GNOME
+X-GNOME-Bugzilla-Product=jdocbase3
+X-GNOME-Bugzilla-Component=general

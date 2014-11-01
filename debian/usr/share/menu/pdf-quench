@@ -1,0 +1,7 @@
+?package(pdf_quench): \
+    needs="X11" \
+    section="Applications/Office" \
+    title="Pdf-Quench" \
+    command="/usr/bin/pdf_quench" \
+    icon="/usr/share/icons/pdf-quench.svg"
+
