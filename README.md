@@ -5,7 +5,7 @@ Pdf-Quench is a visual tool for cropping pdf files. It's made in pure python.
 
 Install on Debian/Ubuntu
 
-$ sudo dpkg -i pdf-quench_1.0.0_all.deb
+$ sudo dpkg -i pdf-quench_1.0.4_all.deb
 
 To make sure all dependants are met:
 
@@ -18,6 +18,10 @@ Download links:
 https://drive.google.com/#folders/0BwrTqzph0i12VDY4R0ZxSTdPTFE
 
 Change Log
+
+v1.0.4
+
+- Add support for cropping with correct rotation.
 
 v1.0.3
 
