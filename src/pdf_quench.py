@@ -43,7 +43,6 @@ VERSION = '1.0.2'
 LAST_OPEN_FOLDER   = None
 NEXT_INDEX = 0
 CROP_SETTING_NAMES = set(['x', 'y', 'w', 'h'])
-MARGIN_OFFSET = 10
 ZOOM_LEVELS = (0.3, 0.5, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)
 DEFAULT_ZOOM_LEVEL = 3
 
@@ -718,9 +717,14 @@ class MainWindow(gtk.Window):
     self.__canvas.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse('#F0F0F0'))
     self.__dragging = False
 
+    frame = gtk.Frame()
+    frame.set_shadow_type(gtk.SHADOW_ETCHED_OUT)
+    frame.set_border_width(10)
+    paned.add2(frame)
+
     sw = gtk.ScrolledWindow()
     sw.add(self.__canvas)
-    paned.add2(sw)
+    frame.add(sw)
 
     accels = gtk.AccelGroup()
     accels.connect_group(ord('o'),
@@ -909,30 +913,41 @@ class MainWindow(gtk.Window):
                           crop_setting['y'],
                           crop_setting['w'],
                           crop_setting['h'])
-            # remove the margin offset
-            x1, y1 = x - MARGIN_OFFSET, y - MARGIN_OFFSET
             # scale it, convert to real poppler page coordinates
             scale = self.__canvas.get_data('scale')
-            x1, y1, w, h = (x1 / scale,
-                            y1 / scale,
-                            w / scale,
-                            h / scale)
+            x1, y1, w1, h1 = (x / scale, y / scale, w / scale, h / scale)
             # it's strange but cropBox.height != cropBox.upper_left_y -
             # cropBox.upper_left_x.  we should use the latter.
             h0 = float(page.cropBox.getUpperLeft_y() -
                        page.cropBox.getLowerLeft_y())
-            x1, y1 = x1, y1
+            w0 = float(page.cropBox.getUpperRight_x() -
+                       page.cropBox.getUpperLeft_x())
+
             # convert poppler coordinates to pyPdf coordinates
-            x1, y1 = x1, h0 - y1 - h
+            rotateAngle = page.get("/Rotate", 0)
+            if rotateAngle < 0:
+              rotateAngle = 360 + currentAngle
+            if rotateAngle == 0:
+              x1, y1 = x1, h0 - y1 - h1
+            elif rotateAngle == 90:
+              x1, y1, w1, h1 = y1, x1, h1, w1
+            elif rotateAngle == 180:
+              pass
+            elif rotateAngle == 270:
+              x1, y1 = h0 - y1 - h1, w0 - x1 - w1
+            else:
+              raise Exception('Invalid rotate angle: ' + rotateAngle)
+
             # poppler API provides only width and height while pyPdf
             # provides far more size information.  poppler width and height
             # doesn't always match pyPdf mediaBox.  Instead, we need to use
             # pyPdf cropBox size to rectify the calculated cropping box.
             x1, y1 = (x1 + float(page.cropBox.getLowerLeft_x()),
                       y1 + float(page.cropBox.getLowerLeft_y()))
+
             # now let's crop it.
             page.mediaBox.lowerLeft = (x1, y1)
-            page.mediaBox.upperRight = (x1+w, y1+h)
+            page.mediaBox.upperRight = (x1+w1, y1+h1)
           out_file.addPage(page)
       out_file.write(file(new_pdf_file_name, 'wb'))
 
@@ -982,17 +997,10 @@ class MainWindow(gtk.Window):
       scale = self.__canvas.get_data('scale')
       w, h = int(w * scale), int(h * scale)
       self.__canvas.set_bounds(0, 0, w, h)
-      background = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB,
-                                  False,
-                                  8,
-                                  w + 2 * MARGIN_OFFSET,
-                                  h + 2 * MARGIN_OFFSET)
+      background = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, False, 8, w, h)
       background.fill(0xF0F0F0FF)
-      drawing_board = background.subpixbuf(MARGIN_OFFSET, MARGIN_OFFSET, w, h)
 
-      self.__canvas.set_data(
-          'page_region',
-          gtk.gdk.Rectangle(MARGIN_OFFSET, MARGIN_OFFSET, w, h))
+      self.__canvas.set_data('page_region', gtk.gdk.Rectangle(0, 0, w, h))
       with gtk.gdk.lock:
         pw, ph = page_width, page_height
         page = self.__current_page
@@ -1010,9 +1018,8 @@ class MainWindow(gtk.Window):
         pixbuf.get_from_drawable(
             pixmap, gtk.gdk.colormap_get_system(), 0, 0, 0, 0, w, h)
         # End.
-        background = pixbuf
 
-      self.__pdf_view.redraw(page_info, background)
+      self.__pdf_view.redraw(page_info, pixbuf)
     else:
       self.__pdf_view.redraw()
 
