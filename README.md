@@ -19,6 +19,10 @@ https://drive.google.com/#folders/0BwrTqzph0i12VDY4R0ZxSTdPTFE
 
 Change Log
 
+v1.0.5
+
+- Set pdf crop box to the same position as meda box, thus fix the issue with cropping the 2nd time.
+
 v1.0.4
 
 - Add support for cropping with correct rotation.
