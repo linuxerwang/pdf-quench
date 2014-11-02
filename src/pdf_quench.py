@@ -946,8 +946,10 @@ class MainWindow(gtk.Window):
                       y1 + float(page.cropBox.getLowerLeft_y()))
 
             # now let's crop it.
-            page.mediaBox.lowerLeft = (x1, y1)
-            page.mediaBox.upperRight = (x1+w1, y1+h1)
+            page.cropBox.lowerLeft = (x1, y1)
+            page.cropBox.upperRight = (x1+w1, y1+h1)
+            page.mediaBox.lowerLeft = page.cropBox.lowerLeft
+            page.mediaBox.upperRight = page.cropBox.upperRight
           out_file.addPage(page)
       out_file.write(file(new_pdf_file_name, 'wb'))
 
