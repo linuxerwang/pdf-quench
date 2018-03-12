@@ -207,7 +207,7 @@ class Resizer(GooCanvas.CanvasEllipse):
 
 
   def __on_button_press(self, item, target, event):
-    if event.button.button == 1:
+    if event.button == 1:
       self.__drag_x = event.x
       self.__drag_y = event.y
       item.get_canvas().pointer_grab(
@@ -519,7 +519,7 @@ class CroppingBox(GooCanvas.CanvasGroup):
 
 
   def __on_button_press(self, item, target, event):
-    if event.button.button == 1:
+    if event.button == 1:
       self.__drag_x = event.x
       self.__drag_y = event.y
 
@@ -535,7 +535,7 @@ class CroppingBox(GooCanvas.CanvasGroup):
 
 
   def __on_button_release(self, item, target, event):
-    if event.button.button == 1:
+    if event.button == 1:
       item.get_canvas().pointer_ungrab(item, event.time)
       self.__dragging = False
     return True
@@ -596,7 +596,7 @@ class PdfView(GooCanvas.CanvasImage):
 
 
   def __on_button_press(self, item, target, event):
-    if event.button.button == 1 and not self.__cropping_box:
+    if event.button == 1 and not self.__cropping_box:
       canvas = item.get_canvas()
       self.__dragging = True
       self.__start_x = event.x
@@ -618,7 +618,7 @@ class PdfView(GooCanvas.CanvasImage):
 
 
   def __on_button_release(self, item, target, event):
-    if event.button.button == 1 and self.__dragging:
+    if event.button == 1 and self.__dragging:
       self.__dragging = False
       canvas = item.get_canvas()
       canvas.pointer_ungrab(item, event.time)
@@ -891,9 +891,7 @@ class MainWindow(Gtk.Window):
       dialog.destroy()
 
     if os.path.exists(new_pdf_file_name):
-      msg_dialog = Gtk.MessageDialog(self,
-                                     flags=Gtk.DIALOG_MODAL,
-                                     type=Gtk.MESSAGE_ERROR)
+      msg_dialog = Gtk.MessageDialog(self,0,Gtk.MessageType.ERROR,Gtk.ButtonsType.CANCEL)
       msg_dialog.set_markup('File exists!')
       msg_dialog.run()
       msg_dialog.destroy()

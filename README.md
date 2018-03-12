@@ -13,7 +13,7 @@ $ sudo dpkg -i pdf-quench_1.0.5_all.deb
 To make sure all dependencies are met:
 
 $ sudo apt install gir1.2-goocanvas-2.0 gir1.2-poppler-0.18 python-pygoocanvas
-  python-poppler python-pypdf
+  python-poppler python-pypdf2
 
 Shortcut can be found at Start > Office > Pdf-Quench.
 
