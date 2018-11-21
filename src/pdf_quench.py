@@ -65,21 +65,40 @@ class CropSetting(object):
 
   def __getitem__(self, name):
     if name in CROP_SETTING_NAMES:
-      return self.__params[name]
+      if name not in self.__params:
+        if self.__parent is None:
+          raise KeyError()
+        return self.__parent[name]
+      else:
+        return self.__params[name]
     else:
       raise KeyError()
 
 
   def __setitem__(self, name, value):
     if name in CROP_SETTING_NAMES:
+      # Also define undefined value of parent
+      if self.__parent is not None and name not in self.__parent.__params:
+        self.__parent[name] = value
+
       self.__params[name] = value
     else:
       raise KeyError()
 
 
   def empty(self):
-    return len(self.__params) == 0
+    # Check if all coordinates are defined (at least by parents)
+    defined = set(self.__params.keys())
 
+    while len(defined) < len(CROP_SETTING_NAMES):
+        parent = self.__parent
+        if parent is None:
+            return True
+        defined.update(parent.__params.keys())
+        # Reference to self is not more needed. So, reuse it as a regular
+        # variable.
+        self = parent
+    return False
 
   def __get_effective_crop_setting(self):
     if self.__params:
@@ -224,7 +243,7 @@ class Resizer(GooCanvas.CanvasEllipse):
     canvas = item.get_canvas()
     canvas.pointer_ungrab(item, event.time)
     page_info = canvas.page_info
-    crop_setting = page_info.crop_setting.effective_crop_setting
+    crop_setting = page_info.crop_setting
     crop_setting['x'] = self._rect.props.x
     crop_setting['y'] = self._rect.props.y
     crop_setting['w'] = self._rect.props.width
@@ -509,7 +528,7 @@ class CroppingBox(GooCanvas.CanvasGroup):
       self.__drag_x = event.x
       self.__drag_y = event.y
       page_info = item.get_canvas().page_info
-      crop_setting = page_info.crop_setting.effective_crop_setting
+      crop_setting = page_info.crop_setting
       crop_setting['x'] = self.__rect.props.x
       crop_setting['y'] = self.__rect.props.y
       crop_setting['w'] = self.__rect.props.width
@@ -543,7 +562,7 @@ class CroppingBox(GooCanvas.CanvasGroup):
 
   def update(self):
     page_info = self.get_canvas().page_info
-    crop_setting = page_info.crop_setting.effective_crop_setting
+    crop_setting = page_info.crop_setting
     if not crop_setting.empty():
       x, y, w, h = (crop_setting['x'],
                     crop_setting['y'],
@@ -634,7 +653,7 @@ class PdfView(GooCanvas.CanvasImage):
         h = 10
 
       page_info = canvas.page_info
-      crop_setting = page_info.crop_setting.effective_crop_setting
+      crop_setting = page_info.crop_setting
       crop_setting['x'] = x
       crop_setting['y'] = y
       crop_setting['w'] = w
@@ -904,7 +923,7 @@ class MainWindow(Gtk.Window):
         page_info = row[1]
         if not page_info.deleted:
           page = reader.getPage(page_info.pagenum)
-          crop_setting = page_info.crop_setting.effective_crop_setting
+          crop_setting = page_info.crop_setting
           if not crop_setting.empty():
             x, y, w, h = (crop_setting['x'],
                           crop_setting['y'],
@@ -968,9 +987,21 @@ class MainWindow(Gtk.Window):
     self.__n_pages = self.__pdf_document.get_n_pages()
 
     self.__pages_model.clear()
-    for i in range(self.__n_pages):
+
+    # 1-st page share its cropping settings with all pages until 2-nd page
+    # cropping is configured. Then, 1-st and 2-nd pages do share its cropping
+    # settings with odd and even pages respectively. Cropping for other pages
+    # is configured independently.
+    if self.__n_pages > 0:
+      size = self.__pdf_document.get_page(0).get_size()
+      self.__pages_model.append(
+          ["1", PageInfo(0, self.__odd_crop, size)])
+    if self.__n_pages > 1:
+      self.__pages_model.append(
+          ["2", PageInfo(1, self.__even_crop, size)])
+
+    for i in range(2, self.__n_pages):
       if i % 2 == 0:
-        size = self.__pdf_document.get_page(i).get_size()
         self.__pages_model.append(
             [str(i+1),
              PageInfo(i, CropSetting(self.__odd_crop), size)])
